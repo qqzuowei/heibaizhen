@@ -3,13 +3,12 @@
  */
 
 var SoundMenuItemLabel = cc.MenuItemLabel.extend({
-    Sound : res.Click_wav,
+    Sound : res.Button_sound,
     ctor : function(easyLabel,onTouch,layer,soundsrc){
         this._super(easyLabel,onTouch,layer);
-
     },
     selected : function(){
-        cc.audioEngine.playEffect(this.Sound,false);
+        cc.audioEngine.playEffect( res.Button_sound,false);
         this._super();
     }
 });

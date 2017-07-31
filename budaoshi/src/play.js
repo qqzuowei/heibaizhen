@@ -28,10 +28,11 @@ var PlayLayer = cc.LayerColor.extend({
         this.sprite.attr({
             x: size.width / 2,
             y: size.height / 2,
-            scale: 0.8,
+            scale: 2,
             rotation: 0
         });
         this.addChild(this.sprite, 0);
+
         this.lineDrawer = new cc.DrawNode();
         this.addChild(this.lineDrawer, 1);
 
@@ -80,9 +81,7 @@ var PlayLayer = cc.LayerColor.extend({
                 }
             }, null, null, cc.color(255, 250, 250, 255)),
             addBottomMenu(this, "分享", 0, function(){
-
                 self.showShareDialog();
-
             }, null, 45, cc.color(255, 255, 255, 255)),
             addBottomMenu(this, "重置", 130, function(){
                 self.stepCount = 0;
@@ -98,7 +97,7 @@ var PlayLayer = cc.LayerColor.extend({
         var self = this;
         showDialogMenu(self,
             [{
-                content : "厉害！！",
+                content : self.zhen.curBestStep ? "最快步数为" + self.zhen.curBestStep : "厉害！！",
                 style : "宋体",
                 size : 28,
                 color : cc.color(0,0,0,255),
@@ -139,7 +138,7 @@ var PlayLayer = cc.LayerColor.extend({
                 cb : function(){
                     self.fromDesign ?
                         cc.director.runScene((new DesignScene(self.zhen.genTemplate()))) :
-                        cc.director.runScene(new PlayScene({}));
+                        cc.director.runScene(new PlayScene(HeiBaiZhen.genNewTemplate()));
                 }
             }]
         );
@@ -165,7 +164,9 @@ var PlayLayer = cc.LayerColor.extend({
                 color : cc.color(0,0,0,255),
                 x : 47,
                 needBg : true,
-                cb : function(){}
+                cb : function(){
+                    jsb.reflection.callStaticMethod("org/cocos2dx/javascript/AppActivity", "showShare", "(Ljava/lang/String;)V", "来吧！");
+                }
             },{
                 content : "取消",
                 color : cc.color(0,0,0,255),
@@ -217,6 +218,7 @@ var PlayScene = cc.Scene.extend({
     fromDesign : null,
     ctor:function(template, fromDesign) {
         this._super();
+        cc.log(template.bestStep);
         this.playTemplate = template;
         this.fromDesign = fromDesign;
     },

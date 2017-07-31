@@ -13,6 +13,7 @@ function HeiBaiZhen(template, initNotLight)
     this.zhen = {
 //    flagid : {
 //        isGood : false,
+//        initIsGood : false,
 //        node : BWNode,
 //        positionX : x,
 //        positionY : y,
@@ -21,14 +22,30 @@ function HeiBaiZhen(template, initNotLight)
 //        }
 //    }
     };
+
+    this.curBestStep = 0;
+
     if (template)
     {
+        if (template.bestStep)
+        {
+            this.curBestStep = template.bestStep;
+        }
+
         for (var n in template)
         {
+            if (n == "bestStep") {
+                continue;
+            }
+
             this.zhen[n] = template[n];
             this.zhen[n].node = new BWNode(initNotLight);
             this.zhen[n].node.flagid = n;
             this.zhen[n].node.isGood = false;
+
+            if (this.zhen[n].initIsGood) {
+                this.zhen[n].node.switchBW();
+            }
         }
     }
     this.currCount = 0;
@@ -140,6 +157,7 @@ HeiBaiZhen.prototype.genTemplate = function()
         t[n].positionX = this.zhen[n].node.sprite.x;
         t[n].positionY = this.zhen[n].node.sprite.y;
         t[n].relate = this.zhen[n].relate;
+        t[n].initIsGood = !this.zhen[n].node.isWhite;
         delete t[n].node;
     }
 
@@ -170,7 +188,8 @@ HeiBaiZhen.prototype.reset = function()
 {
     for (var n in this.zhen)
     {
-        if (!this.zhen[n].node.isWhite)
+        if ((!this.zhen[n].node.isWhite && !this.zhen[n].initIsGood) ||
+            (this.zhen[n].node.isWhite && this.zhen[n].initIsGood))
         {
             this.zhen[n].node.switchBW();
         }
@@ -215,11 +234,80 @@ HeiBaiZhen.prototype.switchNode = function(node, layer, finishCb)
                 }
             }.bind(this, n), layer)
         ));
-
-        //this.zhen[n].node.switchBW();
     }
 };
 
+HeiBaiZhen.prototype.bestStep = function()
+{
+    var nodeKeys = Object.keys(this.zhen);
+    var mapStruct = new Array(nodeKeys.length);
+    var initState = 0;
+
+    for (var j in nodeKeys){
+        if (!this.zhen[nodeKeys[j]].node.isWhite){
+            initState |= 1 << j;
+        }
+        mapStruct[j] = new Array(nodeKeys.length);
+        for (var k in nodeKeys){
+            mapStruct[j][k] = this.zhen[nodeKeys[j]].relate[nodeKeys[k]] ? 1 : 0;
+        }
+    }
+
+    var g_reached_record = new Array();
+    var g_step_record = new Array();
+    var best_step = -1;
+    var best_train = null;
+
+    function resolve_map(nodes, result, step/*, click_train*/) {
+        if (best_step != -1 && step >= best_step -1) {
+            return ;
+        }
+        if (result == (1 << nodes.length) - 1) {
+            //best_train = click_train;
+            best_step = step;
+            return 1;
+        }
+        if (g_reached_record[result] <= step) {
+            return ;
+        }
+        if (g_step_record[result]) {
+            if( g_step_record[result] + step < best_step) {
+                best_step = g_step_record[result] + step;
+            }
+            return g_step_record[result] + 1;
+        }
+        g_reached_record[result] = step;
+
+        var new_result;
+        var tmp = 0;
+        for (var i = 0; i < nodes.length; i++) {
+            new_result = result;
+
+            new_result ^= 1 << i;
+            for (var j = 0; j < nodes.length; j++) {
+                if (nodes[i][j]) {
+                    new_result ^= 1 << j;
+                }
+            }
+            tmp = resolve_map(nodes, new_result, step + 1/*, click_train.concat(i)*/);
+            if(tmp){
+                g_step_record[result] = tmp;
+            }
+        }
+        return g_step_record[result] ?  g_step_record[result] + 1 : 0;
+    }
+
+    resolve_map(mapStruct, initState, 0);
+    this.curBestStep = best_step;
+    cc.log(best_step);
+    return best_step;
+};
+
+/**
+ * show finish celebration
+ * @param layer
+ * @param finishCb
+ */
 HeiBaiZhen.prototype.showFinish = function(layer, finishCb)
 {
     var finalCount = 0;
@@ -257,18 +345,17 @@ HeiBaiZhen.prototype.showFinish = function(layer, finishCb)
 
 /**
  * gen a template depend on difficulty
- * @param {Number} level bigger and more difficulty
+ * @param {Number} [level] bigger and more difficulty
  * @returns {*}
  */
 HeiBaiZhen.genNewTemplate = function(level)
 {
-    switch (level)
-    {
-        case 0:
-            return JSON.parse('{"1438270766519ts":{"positionX":101.12359550561797,"positionY":294.3820224719101,"relate":{"1438270767363ts":true}},"1438270767363ts":{"positionX":220.22471910112358,"positionY":465.1685393258427,"relate":{"1438270768477ts":true,"1438270766519ts":true}},"1438270768477ts":{"positionX":105.61797752808988,"positionY":588.7640449438202,"relate":{"1438270769014ts":true,"1438270767363ts":true}},"1438270769014ts":{"positionX":330.3370786516854,"positionY":638.2022471910112,"relate":{"1438270768477ts":true}}}');
-        case 1:
-            return JSON.parse('{"1438270894456ts":{"positionX":128.08988764044943,"positionY":591.0112359550561,"relate":{"1438270898719ts":true,"1438270897744ts":true}},"1438270895023ts":{"positionX":294.3820224719101,"positionY":485.39325842696627,"relate":{"1438270898719ts":true,"1438270897744ts":true,"1438270896372ts":true}},"1438270895703ts":{"positionX":74.15730337078652,"positionY":325.8426966292135,"relate":{"1438270896372ts":true,"1438270897744ts":true}},"1438270896372ts":{"positionX":325.8426966292135,"positionY":229.2134831460674,"relate":{"1438270895703ts":true,"1438270895023ts":true}},"1438270897744ts":{"positionX":202.24719101123594,"positionY":406.7415730337079,"relate":{"1438270895023ts":true,"1438270894456ts":true,"1438270895703ts":true}},"1438270898719ts":{"positionX":267.4157303370786,"positionY":689.8876404494382,"relate":{"1438270894456ts":true,"1438270895023ts":true}}}');
-        default:
-            return {};
-    }
+    var keys = Object.keys(gMapLib);
+    if (!HeiBaiZhen.startIndex)
+        HeiBaiZhen.startIndex = Math.floor(cc.random0To1() * keys.length);
+
+    if(HeiBaiZhen.startIndex == keys.length)
+        HeiBaiZhen.startIndex = 0;
+
+    return gMapLib[keys[HeiBaiZhen.startIndex++]];
 }

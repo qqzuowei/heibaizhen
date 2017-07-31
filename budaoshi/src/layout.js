@@ -10,7 +10,7 @@
  * @param fontSize
  * @param height
  * @param onTouch
- * @returns {cc.MenuItemLabel}
+ * @returns
  */
 function addCenterJumpMenu(layer, text, fontType, fontSize, height, onTouch)
 {
@@ -40,7 +40,7 @@ function addBottomMenu(layer, text, x, onTouch, fontType, fontSize, fontColor)
     fontColor = fontColor ? fontColor : cc.color(0,0,0,255);
 
     var easyLabel = new cc.LabelTTF(text, fontType, fontSize);
-    easyLabel.color = cc.color(0,0,0,255);
+    easyLabel.color = fontColor;
     var easyItem = new SoundMenuItemLabel(easyLabel, onTouch, layer);
     easyItem.setPosition(cc.p(cc.winSize.width/2 + x, 6 + easyLabel.height / 2));
 
@@ -57,7 +57,7 @@ function addBottomMenu(layer, text, x, onTouch, fontType, fontSize, fontColor)
 function showDialogMenu(layer, textList, menuList, touchDisappear)
 {
     //1. create back layer to cover main layer
-    var dialogLayer = new cc.LayerColor(cc.color(0,0,0,120));
+    var dialogLayer = new cc.LayerColor(cc.color(0,0,0,150));
     cc.eventManager.addListener(cc.EventListener.create({
         event : cc.EventListener.TOUCH_ONE_BY_ONE,
         swallowTouches : true,
@@ -70,13 +70,18 @@ function showDialogMenu(layer, textList, menuList, touchDisappear)
         }
     }), dialogLayer);
 
-    var dialogBG = new cc.Sprite(res.Dialog_png);
-    dialogBG.attr({
-        x : cc.winSize.width/2,
-        y : cc.winSize.height/2,
-        scale : 1.2
-    });
-    dialogLayer.addChild(dialogBG, 0);
+    var dialogBG;
+    if (!touchDisappear) {
+        dialogBG = new cc.Sprite(res.Dialog_png);
+        dialogBG.attr({
+            x : cc.winSize.width/2,
+            y : cc.winSize.height/2,
+            scale : 1.2
+        });
+        dialogLayer.addChild(dialogBG, 0);
+    } else {
+        dialogBG = dialogLayer;
+    }
 
     //2. add text
     var topHeight = dialogBG.height - 80;
@@ -97,13 +102,12 @@ function showDialogMenu(layer, textList, menuList, touchDisappear)
         var menuLabel = new cc.LabelTTF(m.content, "微软雅黑", m.size ? m.size : 28);
         menuLabel.color = m.color;
         var menuItem = new SoundMenuItemLabel(menuLabel, m.cb.bind(this, dialogLayer), dialogBG);
-        menuItem.setPosition(cc.p(dialogBG.width/2 + m.x, 35 + menuLabel.height / 2));
-
+        menuItem.setPosition(cc.p(dialogBG.width/2 + m.x, 30 + menuLabel.height / 2));
 
         itemList.push(menuItem);
     });
+
     var dialogMenu = cc.Menu.create.apply(cc.Menu, itemList);
-//    dialogMenu.initWithItems(itemList);
     dialogMenu.setPosition(cc.p(0, 0));
     dialogBG.addChild(dialogMenu);
 

@@ -3,7 +3,7 @@
  */
 
 var BASE_WIDTH_NUM = 7;
-var TOUCH_THRESHOLD = 15;
+var TOUCH_THRESHOLD = 7;
 
 /**
  * a black white node instance
@@ -12,7 +12,7 @@ var TOUCH_THRESHOLD = 15;
 function BWNode(notLigth)
 {
     this.notLigth = notLigth;
-    this.sprite = new cc.Sprite(notLigth ? res.WhiteNode_png : res.WhiteNodeLight_png);
+    this.sprite = new cc.Sprite(res.WhiteNodeLight_png);
     this.isWhite = true;
     this.isSelected = false;
     this.selectBackGround = null;
@@ -41,7 +41,6 @@ BWNode.prototype.enableSwitch = function(cb)
 
             if (cc.rectContainsPoint(target.getBoundingBox(),pos))
             {
-                cc.audioEngine.playEffect(res.Switch_mp3,false);
                 self.switchBW();
                 cb ? cb(self) : null;
                 return true;
@@ -62,15 +61,16 @@ BWNode.prototype.enableSwitch = function(cb)
  */
 BWNode.prototype.switchBW = function()
 {
-
     if (this.isWhite)
     {
-        this.sprite.setTexture(res.BlackNode_png);
+        cc.audioEngine.playEffect(res.ToLight_sound,false);
+        this.sprite.setTexture(this.notLigth ? res.WhiteNode_png : res.BlackNode_png);
         this.isWhite = false;
     }
     else
     {
-        this.sprite.setTexture(this.notLigth ? res.WhiteNode_png : res.WhiteNodeLight_png);
+        cc.audioEngine.playEffect(res.ToBlack_sound,false);
+        this.sprite.setTexture(res.WhiteNodeLight_png);
         this.isWhite = true;
     }
 }
@@ -150,24 +150,21 @@ BWNode.prototype.switchSelect = function()
 {
     if (this.selectBackGround)
     {
-//        this.selectBackGround.removeFromParent(true);
-//          this.selectBackGround.removeFromParent(true);
+
         this.selectBackGround = null;
-        this.sprite.setTexture(res.WhiteNode_png);
+        this.sprite.setTexture(
+            this.sprite.getTexture().url == res.BlackNode_png ?
+                res.WhiteNode_png : res.WhiteNodeLight_png);
+        cc.audioEngine.playEffect(res.ToBlack_sound,false);
     }
     else
     {
-//        var layer = this.sprite.getParent();
-//        this.selectBackGround = new cc.Sprite(res.Select_png);
-//        this.selectBackGround.attr({
-//            x : this.sprite.x,
-//            y : this.sprite.y,
-//            scale  : 0.5,
-//            rotation : 0
-//        });
-//        layer.addChild(this.selectBackGround, 0);
         this.selectBackGround = true;
-        this.sprite.setTexture(res.BlackNode_png);
+        cc.audioEngine.playEffect(res.ToLight_sound,false);
+        cc.log(this.sprite.getTexture());
+        this.sprite.setTexture(
+                this.sprite.getTexture().url == res.WhiteNode_png ?
+                    res.BlackNode_png : res.BlackNodeLight_png);
     }
 }
 
